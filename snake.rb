@@ -7,73 +7,97 @@ class Snake < Gosu::Window
         super 640, 480
         self.caption = "Snake-spel"
         
-        # Current-position
-        @current = [0, 0]
-
-
-        # Grid, odefinerade(nil) = :free
-        grid = Hash.new(:free)
-
-        # Food
-        grid[[1,0]] = :food
-
-        # Taken
-        grid[[20, 20]] = :taken
-
-        @add_x = 0
-        @add_y = 0
+        # Current-direction
+        @current_direction = "down"
+        # Current-positions
+        @snake_body = [[25, 25], [25, 50], [25, 75], [25, 100]]
+        # Last-moved
+        @last_moved = Time.now
+        @movable = true
+        @delay = 0.3
 
     end
 
 
     def update
 
-     
-        time = Time.now.to_i
+        if Time.now - @last_moved > @delay
+
+            @movable = true
+
+        end
+
+        p Time.now - @last_moved
         
-        if button_down?(Gosu::KbRight)
-           
-            @add_x = 30
-            @add_y = 0
+        if Gosu.button_down?(Gosu::KbLeft) && @current_direction != "right"
+            @current_direction = "left"
+        end
+
+        if Gosu.button_down?(Gosu::KbUp) && @current_direction != "down"
+            @current_direction = "up"
+        end
+
+        if Gosu.button_down?(Gosu::KbRight) && @current_direction != "left"
+            @current_direction = "right"
+        end
+
+        if Gosu.button_down?(Gosu::KbDown) && @current_direction != 'up'
+            @current_direction = "down"
+        end
+
+        p @snake_body
+    
+        if @current_direction == "left" && @movable == true
+
+            @snake_body.shift
+
+            @snake_body.push([@snake_body.last[0] - 25, @snake_body.last[1]])
+
+            @last_moved = Time.now
 
         end
 
-        if button_down?(Gosu::KbDown)
-            
-            @add_x = 0
-            @add_y = 30
+        if @current_direction == "up" && @movable == true
+
+            @snake_body.shift
+
+            @snake_body.push([@snake_body.last[0], @snake_body.last[1] - 25])
+
+            @last_moved = Time.now
 
         end
 
-        if button_down?(Gosu::KbLeft)
+        if @current_direction == "right" && @movable == true
 
-            @add_x = -30
-            @add_y = 0
+            @snake_body.shift
 
-        end
+            @snake_body.push([@snake_body.last[0] + 25, @snake_body.last[1]])
 
-        if button_down?(Gosu::KbUp)
-     
-            @add_x = 0
-            @add_y = -30
-
+            @last_moved = Time.now
 
         end
-        
 
-        @current = [@current[0] + @add_x, @current[1] + @add_y]
+        if @current_direction == "down" && @movable == true
 
-        p @current
+            @snake_body.shift
+
+            @snake_body.push([@snake_body.last[0], @snake_body.last[1] + 25])
+
+            @last_moved = Time.now
+
+        end
+    
+        @movable = false
 
     end
 
     def draw
 
-        #Position  x    y
-        draw_rect(@current[0], @current[1], 5, 5, Gosu::Color.new(0xff_ffffff))
-        
+        # Rita ut varje del av snaken
+        @snake_body.each do |element|
+            draw_rect(element[0], element[1], 25, 25, Gosu::Color.new(0xff_ffffff))
+        end
     end
-
 
 end
 
