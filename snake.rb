@@ -12,7 +12,7 @@ class Food
 
     def draw
         if( !@eaten ) then
-            Gosu::draw_rect(@pos[0], @pos[1], 25, 25, Gosu::Color.new(0xff_029599))
+            Gosu::draw_rect(@pos[0], @pos[1], 25, 25, Gosu::Color.new(0xff_ff0000))
         end
     end
 
@@ -34,11 +34,10 @@ class Snake < Gosu::Window
 
     attr_accessor :apples
 
-    
 
     def initialize
         
-        super 640, 480
+        super 525, 525
         self.caption = "Snake-spel"
         
         # Current-direction
@@ -51,41 +50,70 @@ class Snake < Gosu::Window
         @delay = 0.1
         @apples = []
         @apples_pos = []
-        @startup = true
-        
+        @score = 0
+        @gameover = false
+        @apples << Food.new(self.class, [175, 300])
+        @one_spawn = true
 
     end
 
 
     def update
-        if Time.now - @last_moved > @delay
+
+
+        if Time.now - @last_moved > @delay && !@gameover
 
             @movable = true
 
         end
 
+        @text = Gosu::Image.from_text(self, "Poäng: #{@score}", Gosu.default_font_name, 45)
+        @gameover_text = Gosu::Image.from_text(self, "Gameover! Din poäng blev: #{@score}", Gosu.default_font_name, 30)
+
+
         @apples.each do |apple|
-            if( @snake_body.last == apple.pos && !apple.eaten ) then
+            if( @snake_body.last == apple.pos && !apple.eaten ) && @movable == true then
                 apple.eaten = true
+                @score +=1
+                @delay -= 0.0002
+
+
+                same_pos = true
+
+                while same_pos
+                    
+                    new_x = rand(1..19) * 25 
+                    new_y = rand(1..19) * 25
+
+                    if apple.pos[0] == new_x && apple.pos[1] == new_y
+                        same_pos = true
+                    else
+                        same_pos = false
+                    end
+
+                end
+
+                @apples << Food.new(self.class, [new_x, new_y])
+
 
                 case @current_direction
                     
-
+        
                 when :left
 
-                    @snake_body.push([@snake_body.last[0] - 25, @snake_body.last[1]])
+                    @snake_body.unshift([@snake_body[0][0] + 25, @snake_body[0][1]])
 
                 when :up
 
-                    @snake_body.push([@snake_body.last[0], @snake_body.last[1] - 25])
+                    @snake_body.unshift([@snake_body[0][0], @snake_body[0][1] - 25])
 
                 when :right
 
-                    @snake_body.push([@snake_body.last[0] + 25, @snake_body.last[1]])
+                    @snake_body.unshift([@snake_body[0][0] - 25, @snake_body[0][1]])
 
                 when :down
 
-                    @snake_body.push([@snake_body.last[0], @snake_body.last[1] + 25])
+                    @snake_body.unshift([@snake_body[0][0], @snake_body[0][1] + 25])
 
                 end
 
@@ -93,7 +121,13 @@ class Snake < Gosu::Window
             end
         end
 
+        # Check out of boundaries
 
+        if !@snake_body.last[0].between?(0,width - 25) || !@snake_body.last[1].between?(0,height - 25)
+                
+            @gameover = true
+
+        end
 
         
         if Gosu.button_down?(Gosu::KbLeft) && @current_direction != :right
@@ -120,7 +154,7 @@ class Snake < Gosu::Window
 
             if @snake_body.include?([@snake_body.last[0] - 25, @snake_body.last[1]])
 
-                close
+                @gameover = true
 
             end
 
@@ -136,7 +170,7 @@ class Snake < Gosu::Window
 
             if @snake_body.include?([@snake_body.last[0], @snake_body.last[1] - 25])
 
-                close
+                @gameover = true
 
             end
 
@@ -154,7 +188,7 @@ class Snake < Gosu::Window
 
             if @snake_body.include?([@snake_body.last[0] + 25, @snake_body.last[1]])
 
-                close
+                @gameover = true
 
             end
 
@@ -170,7 +204,7 @@ class Snake < Gosu::Window
 
             if @snake_body.include?([@snake_body.last[0], @snake_body.last[1] + 25])
 
-                close
+                @gameover = true
 
             end
 
@@ -181,12 +215,14 @@ class Snake < Gosu::Window
         end
 
 
-
         @movable = false
+
 
     end
 
     def draw
+
+
         @apples.each do |apple|
             apple.draw()
         end
@@ -194,17 +230,24 @@ class Snake < Gosu::Window
         @snake_body.each do |element|
             draw_rect(element[0], element[1], 25, 25, Gosu::Color.new(0xff_ffffff))
         end
+
+        @text.draw(10, 20, 0, 1, 1, Gosu::Color.new(0xff_808080))
+
+        if @gameover
+
+            @gameover_text.draw(100, 200, 0, 1, 1, Gosu::Color.new(0xff_ff0000))
+
+        end
+
     end
 
 end
 
-
-
 window = Snake.new
 
-window.apples << Food.new(window, [100, 100])
-window.apples << Food.new(window, [250, 100])
-window.apples << Food.new(window, [300, 125])
-window.apples << Food.new(window, [175, 175])
-window.apples << Food.new(window, [25, 75])
+window.apples << Food.new(window, [rand(1..19) * 25, rand(1..19) * 25])
+window.apples << Food.new(window, [rand(1..19) * 25, rand(1..19) * 25])
+window.apples << Food.new(window, [rand(1..19) * 25, rand(1..19) * 25])
+window.apples << Food.new(window, [rand(1..19) * 25, rand(1..19) * 25])
+window.apples << Food.new(window, [rand(1..19) * 25, rand(1..19) * 25])
 window.show
