@@ -39,20 +39,32 @@ class Snake < Gosu::Window
         @snake_body = [[25, 25], [25, 50], [25, 75], [25, 100], [25, 125], [25, 150], [25, 175], [25, 200]]
         # Last-moved
         @last_moved = Time.now
+        @last_blinded = Time.now
         @movable = true
+        @blind_mode = false
         @delay = 0.1
         @apples = []
         @score = 0
+        @level = 1
         @gameover = false
         @text_color = 0xff_ff0000
         @apples << Food.new(self.class, [175, 300])
         @startscreen = true
+
+        @apple_sound = Gosu::Sample.new("apple.wav")
+        @blind_sound = Gosu::Sample.new("blind.wav")
+
+        
+        @background_sound = Gosu::Song.new("background.wav")
+        @background_sound.volume = 0.3
+
+
+
     end
 
 
     def update
 
-         @menu = Menu.new(@input)
 
         if Time.now - @last_moved > @delay && !@gameover && !@startscreen
 
@@ -64,23 +76,52 @@ class Snake < Gosu::Window
 
             @text_color = 0xff_47C24E
             @startscreen = false
+            @background_sound.play
             
         end
 
         # Texts
         @start_text = Gosu::Image.from_text(self, "Spela - SPACE", Gosu.default_font_name, 40)
         @settings_text = Gosu::Image.from_text(self, "Inställningar - ENTER", Gosu.default_font_name, 40)
-        @text = Gosu::Image.from_text(self, "Poäng: #{@score}", Gosu.default_font_name, 45)
+        @text = Gosu::Image.from_text(self, "Poäng: #{@score}/#{2 * @level}", Gosu.default_font_name, 45)
+        @level_text = Gosu::Image.from_text(self, "Level: #{@level}", Gosu.default_font_name, 30)
         @gameover_text = Gosu::Image.from_text(self, "Gameover! Din poäng blev: #{@score}", Gosu.default_font_name, 30)
+        @blind_text = Gosu::Image.from_text(self, "Spooky", Gosu.default_font_name, 30)
+
+
+        if @score >= (2 * @level)
+
+            @score = 0
+            @level +=1
+
+        end
 
         
+
+        if @level >= 3 && Random.new.rand(800).between?(0,1) && !@blind_mode && !@gameover
+
+            @blind_mode = true
+            @last_blinded = Time.now
+            @blind_sound.play
+
+        end
+
+        if @blind_mode then
+
+            if Time.now - @last_blinded > 1
+
+                @blind_mode = false
+
+            end
+
+        end
 
         @apples.each do |apple|
             if( @snake_body.last == apple.pos && !apple.eaten ) && @movable == true then
                 apple.eaten = true
                 @score +=1
                 @delay -= 0.0002
-
+                @apple_sound.play
 
                 same_pos = true
 
@@ -218,6 +259,12 @@ class Snake < Gosu::Window
 
         end
 
+        if @gameover 
+
+            @blind_mode = false
+
+        end
+
 
         @movable = false
 
@@ -226,23 +273,36 @@ class Snake < Gosu::Window
 
 
     def draw
-            
-            @apples.each do |apple|
-                apple.draw()
+
+            if !@startscreen && !@blind_mode
+                
+                @apples.each do |apple|
+                    apple.draw()
+                end
+                # Draw every block of the snake
+                @snake_body.each do |element|
+                    draw_rect(element[0], element[1], 25, 25, Gosu::Color.new(0xff_ffffff))
+                end
+
+                @text.draw(10, 20, 0, 1, 1, Gosu::Color.new(0xff_808080))
+                @level_text.draw(10, 60, 0, 1, 1, Gosu::Color.new(0xff_808000))
+
+                if @gameover
+
+                    @gameover_text.draw(100, 200, 0, 1, 1, Gosu::Color.new(0xff_ff0000))
+
+                end
+            elsif @startscreen
+                @start_text.draw(150, 300, 0, 1, 1, Gosu::Color.new(0xff_808080))
+
             end
-            # Draw every block of the snake
-            @snake_body.each do |element|
-                draw_rect(element[0], element[1], 25, 25, Gosu::Color.new(0xff_ffffff))
-            end
 
-            @text.draw(10, 20, 0, 1, 1, Gosu::Color.new(0xff_808080))
+            if @blind_mode 
 
-            if @gameover
+                @blind_text.draw(100, 200, 0, 1, 1, Gosu::Color.new(0xff_808080))
 
-                @gameover_text.draw(100, 200, 0, 1, 1, Gosu::Color.new(0xff_ff0000))
 
             end
-    
     end
 
 end
