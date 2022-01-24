@@ -1,5 +1,9 @@
 require 'gosu'
 
+
+
+
+
 class Food
     attr_accessor :window, :pos, :eaten
     def initialize(window, pos_vec)
@@ -16,17 +20,6 @@ class Food
         end
     end
 
-    def mypos
-
-        @pos
-
-    end
-
-    def remove_food(position)
-
-        @pos.delete(position)
-
-    end
 
 end
 
@@ -49,27 +42,38 @@ class Snake < Gosu::Window
         @movable = true
         @delay = 0.1
         @apples = []
-        @apples_pos = []
         @score = 0
         @gameover = false
+        @text_color = 0xff_ff0000
         @apples << Food.new(self.class, [175, 300])
-        @one_spawn = true
-
+        @startscreen = true
     end
 
 
     def update
 
+         @menu = Menu.new(@input)
 
-        if Time.now - @last_moved > @delay && !@gameover
+        if Time.now - @last_moved > @delay && !@gameover && !@startscreen
 
             @movable = true
 
         end
 
+        if Gosu.button_down?(Gosu::KB_SPACE) && @startscreen
+
+            @text_color = 0xff_47C24E
+            @startscreen = false
+            
+        end
+
+        # Texts
+        @start_text = Gosu::Image.from_text(self, "Spela - SPACE", Gosu.default_font_name, 40)
+        @settings_text = Gosu::Image.from_text(self, "Inställningar - ENTER", Gosu.default_font_name, 40)
         @text = Gosu::Image.from_text(self, "Poäng: #{@score}", Gosu.default_font_name, 45)
         @gameover_text = Gosu::Image.from_text(self, "Gameover! Din poäng blev: #{@score}", Gosu.default_font_name, 30)
 
+        
 
         @apples.each do |apple|
             if( @snake_body.last == apple.pos && !apple.eaten ) && @movable == true then
@@ -123,7 +127,7 @@ class Snake < Gosu::Window
 
         # Check out of boundaries
 
-        if !@snake_body.last[0].between?(0,width - 25) || !@snake_body.last[1].between?(0,height - 25)
+        if !@snake_body.last[0].between?(0,width) || !@snake_body.last[1].between?(0,height)
                 
             @gameover = true
 
@@ -220,34 +224,38 @@ class Snake < Gosu::Window
 
     end
 
+
     def draw
+            
+            @apples.each do |apple|
+                apple.draw()
+            end
+            # Draw every block of the snake
+            @snake_body.each do |element|
+                draw_rect(element[0], element[1], 25, 25, Gosu::Color.new(0xff_ffffff))
+            end
 
+            @text.draw(10, 20, 0, 1, 1, Gosu::Color.new(0xff_808080))
 
-        @apples.each do |apple|
-            apple.draw()
-        end
-        # Rita ut varje del av snaken
-        @snake_body.each do |element|
-            draw_rect(element[0], element[1], 25, 25, Gosu::Color.new(0xff_ffffff))
-        end
+            if @gameover
 
-        @text.draw(10, 20, 0, 1, 1, Gosu::Color.new(0xff_808080))
+                @gameover_text.draw(100, 200, 0, 1, 1, Gosu::Color.new(0xff_ff0000))
 
-        if @gameover
-
-            @gameover_text.draw(100, 200, 0, 1, 1, Gosu::Color.new(0xff_ff0000))
-
-        end
-
+            end
+    
     end
 
 end
 
 window = Snake.new
 
-window.apples << Food.new(window, [rand(1..19) * 25, rand(1..19) * 25])
-window.apples << Food.new(window, [rand(1..19) * 25, rand(1..19) * 25])
-window.apples << Food.new(window, [rand(1..19) * 25, rand(1..19) * 25])
-window.apples << Food.new(window, [rand(1..19) * 25, rand(1..19) * 25])
-window.apples << Food.new(window, [rand(1..19) * 25, rand(1..19) * 25])
+apples = 0
+
+until apples == 10
+
+    window.apples << Food.new(window, [rand(1..19) * 25, rand(1..19) * 25])
+
+    apples +=1
+end
+
 window.show
